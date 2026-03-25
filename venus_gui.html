@@ -1,0 +1,257 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Venus Bass Machine</title>
+<style>
+body {
+  margin: 0;
+  font-family: "Segoe UI", sans-serif;
+  background: #0B0F1A;
+  color: #E6EAF2;
+}
+
+.container {
+  display: grid;
+  grid-template-columns: 220px 1fr 420px;
+  grid-template-rows: auto 80px;
+  height: 100vh;
+}
+
+/* SIDEBAR */
+.sidebar {
+  background: #12182A;
+  padding: 15px;
+  overflow-y: auto;
+}
+
+.folder {
+  padding: 8px;
+  border-radius: 8px;
+  margin-bottom: 5px;
+  cursor: pointer;
+}
+
+.folder.active {
+  background: linear-gradient(135deg, #FF3B8D, #FF7A5C);
+}
+
+/* PRESET GRID */
+.grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+  padding: 15px;
+  overflow-y: auto;
+}
+
+.card {
+  background: #12182A;
+  border-radius: 12px;
+  padding: 10px;
+  position: relative;
+  cursor: pointer;
+  transition: 0.2s;
+}
+
+.card:hover {
+  transform: scale(1.02);
+  box-shadow: 0 0 20px rgba(255,59,141,0.3);
+}
+
+.wave {
+  height: 40px;
+  background: linear-gradient(135deg, #FF3B8D, #FF7A5C);
+  border-radius: 6px;
+  margin-top: 8px;
+}
+
+/* EDIT PANEL */
+.editor {
+  background: #12182A;
+  padding: 15px;
+  display: flex;
+  flex-direction: column;
+}
+
+.tabs {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 10px;
+}
+
+.tab {
+  padding: 6px 12px;
+  border-radius: 20px;
+  border: 1px solid #444;
+  cursor: pointer;
+}
+
+.tab.active {
+  background: linear-gradient(135deg, #FF3B8D, #FF7A5C);
+  border: none;
+}
+
+/* WAVE DISPLAY */
+.canvas {
+  flex: 1;
+  background: #0B0F1A;
+  border-radius: 12px;
+}
+
+/* SLIDERS */
+.sliders {
+  display: flex;
+  justify-content: space-between;
+  margin-top: 10px;
+}
+
+.slider {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+input[type=range] {
+  writing-mode: bt-lr;
+  -webkit-appearance: slider-vertical;
+  height: 120px;
+}
+
+/* FOOTER */
+.footer {
+  grid-column: 1 / span 3;
+  background: #12182A;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px;
+}
+
+button {
+  background: linear-gradient(135deg, #FF3B8D, #FF7A5C);
+  border: none;
+  padding: 10px 15px;
+  border-radius: 20px;
+  color: white;
+  cursor: pointer;
+}
+
+.morph {
+  width: 200px;
+}
+</style>
+</head>
+
+<body>
+
+<div class="container">
+
+  <!-- SIDEBAR -->
+  <div class="sidebar">
+    <div class="folder active">Solar Venus</div>
+    <div class="folder">Gangster Gluck</div>
+    <div class="folder">Venus</div>
+    <div class="folder">Banks</div>
+  </div>
+
+  <!-- PRESET GRID -->
+  <div class="grid">
+    <div class="card">
+      061 - Lucifer Morning
+      <div class="wave"></div>
+    </div>
+    <div class="card">
+      062 - Moog Seductress
+      <div class="wave"></div>
+    </div>
+    <div class="card">
+      063 - NY Glue
+      <div class="wave"></div>
+    </div>
+    <div class="card">
+      064 - Transient Snap
+      <div class="wave"></div>
+    </div>
+  </div>
+
+  <!-- EDIT PANEL -->
+  <div class="editor">
+
+    <div class="tabs">
+      <div class="tab active">Raw</div>
+      <div class="tab">Transient</div>
+      <div class="tab">Gluck</div>
+      <div class="tab">NY Comp</div>
+      <div class="tab">Mastered</div>
+    </div>
+
+    <canvas id="waveCanvas" class="canvas"></canvas>
+
+    <div class="sliders">
+      <div class="slider">
+        <input type="range" min="0" max="100" value="50">
+        <span>Attack</span>
+      </div>
+      <div class="slider">
+        <input type="range" min="0" max="100" value="50">
+        <span>Sustain</span>
+      </div>
+      <div class="slider">
+        <input type="range" min="0" max="100" value="50">
+        <span>NY Depth</span>
+      </div>
+      <div class="slider">
+        <input type="range" min="0" max="100" value="50">
+        <span>Master</span>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- FOOTER -->
+  <div class="footer">
+    <button>RANDOMIZE VENUS</button>
+    <input class="morph" type="range" min="0" max="100">
+    <button>CLEAR TO SINE</button>
+    <button>SAVE</button>
+  </div>
+
+</div>
+
+<script>
+const canvas = document.getElementById("waveCanvas");
+const ctx = canvas.getContext("2d");
+
+function resize() {
+  canvas.width = canvas.clientWidth;
+  canvas.height = canvas.clientHeight;
+}
+window.addEventListener("resize", resize);
+resize();
+
+function drawWave() {
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+  ctx.beginPath();
+  for (let x = 0; x < canvas.width; x++) {
+    let y = canvas.height/2 + Math.sin(x * 0.02) * 50;
+    ctx.lineTo(x, y);
+  }
+
+  let grad = ctx.createLinearGradient(0,0,canvas.width,canvas.height);
+  grad.addColorStop(0, "#FF3B8D");
+  grad.addColorStop(1, "#00F5D4");
+
+  ctx.strokeStyle = grad;
+  ctx.lineWidth = 2;
+  ctx.stroke();
+
+  requestAnimationFrame(drawWave);
+}
+
+drawWave();
+</script>
+
+</body>
+</html>
