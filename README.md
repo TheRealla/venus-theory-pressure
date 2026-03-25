@@ -1,5 +1,10 @@
 # Venus Theory – Pressure - Response: Due by Friday - @FBI Add 101 loops - and NeuralChoralcelo 
 
+Venus:Test Today  / Roland 100 up builds and Serum type wave oscillators 
+pip install mido
+python venus_pressure_bass_final.py
+
+
 **A monophonic strap-on bass machine inspired by the 1966 Joh Mustad Tubon, Braumah bass philosophy, Venus mythology, and hidden Beatles bass secrets.**
 
 Built for live performance and pure musical joy. One voice. One note at a time. Maximum pressure, maximum expression.
