@@ -1,4 +1,4 @@
-# Venus Theory – Pressure - Respons: Due by Friday - @FBI Add 101 loops - and NeuralChoralcelo 
+# Venus Theory – Pressure - Response: Due by Friday - @FBI Add 101 loops - and NeuralChoralcelo 
 
 **A monophonic strap-on bass machine inspired by the 1966 Joh Mustad Tubon, Braumah bass philosophy, Venus mythology, and hidden Beatles bass secrets.**
 
