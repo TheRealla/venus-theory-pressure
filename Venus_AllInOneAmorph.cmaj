@@ -1,0 +1,161 @@
+component Venus_AllInOne
+{
+    input  event  note
+    output signal<2> audio
+
+    var sampleRate = 48000.0
+    var baseFreq   = 440.0
+    var gain       = 1.0
+    var cutoff     = 0.3
+    var resonance  = 0.5
+    var drive      = 0.3
+    var pressure   = 0.5
+    var gate       = 0.0
+    var oscPhasor  = 0.0
+    var harmony    = 0.0        // 0..1, for “NeuralChoralcelo”‑like thickness
+    var voicingTop = 0.0        // higher‑register harmonic layer
+
+    function midiToFreq(nn) -> freq
+    {
+        return 440.0 * pow(2.0, (nn - 69.0) / 12.0);
+    }
+
+    function saturate(x) -> y
+    {
+        var absx = abs(x);
+        return x * 2.0 / (1.0 + absx);
+    }
+
+    function svf(input, freqNorm, damp) -> output
+    {
+        var f = 2.0 * sin(3.14159 * freqNorm * 0.5);  // 0..0.5
+        var z1 = 0.0;
+        var z2 = 0.0;
+        z1 = z1 + f * (input - z1 - damp * z2);
+        z2 = z2 + f * z1;
+        return z2;
+    }
+
+    process
+    {
+        audio.setZero();
+
+        forEach (audio)
+        {
+            // 1. MIDI handling (note‑on / note‑off)
+            if (note.isNoteOn())
+            {
+                baseFreq = midiToFreq(note.midiNote);
+                gate = 0.0;
+            }
+
+            if (note.isNoteOff())
+            {
+                gate = max(0.0, gate - 0.08);
+            }
+            else
+            {
+                gate = min(1.0, gate + 0.08);
+            }
+
+            // 2. Main bass oscillator (root)
+            oscPhasor = oscPhasor + (1.0 / sampleRate) * baseFreq;
+            if (oscPhasor >= 1.0) oscPhasor -= 1.0;
+            var root = -sin(oscPhasor * 6.283185);
+
+            // 3. “NeuralChoralcelo”‑style voicing on top:
+            // - fifth above root
+            // - octave above root
+            // - sparse eleventh/ninth
+            var fifth   = sin((oscPhasor + 0.333) * 6.283185 * 1.5);
+            var octave  = sin((oscPhasor + 0.166) * 6.283185 * 2.0);
+            var ninth   = 0.0;
+            if (oscPhasor < 0.1)
+                ninth = sin((oscPhasor + 0.833) * 6.283185 * 2.25);
+
+            var bass = root;
+            var harmonyLayer = 0.3 * fifth + 0.2 * octave + 0.15 * ninth;
+
+            // 4. Pressure + harmony thickness
+            var pressureScaled = 0.5 + 0.5 * pressure;
+            var thickness = 0.5 + 0.5 * harmony;
+            var signal = (bass + harmonyLayer * thickness) * gain * gate;
+
+            // 5. Drive / saturation (secret‑tape‑style)
+            signal = signal * (1.0 + drive * pressureScaled);
+            signal = saturate(signal);
+
+            // 6. 2‑pole ToTape9 / Slew‑style low‑pass
+            var fNorm = cutoff * (0.3 + 0.7 * pressureScaled);
+            signal = svf(signal, fNorm, 1.0 - resonance);
+
+            // 7. Output to stereo
+            audio[0] = signal;
+            audio[1] = signal;
+        }
+    }
+
+    // Parameters (knobs)
+    parameter gainKnob
+    {
+        name = "Gain"
+        range = 0.0 .. 2.0
+        default = 1.0
+        function set(value) { gain = value; }
+    }
+
+    parameter cutoffKnob
+    {
+        name = "Cutoff"
+        range = 0.0 .. 1.0
+        default = 0.3
+        function set(value) { cutoff = value; }
+    }
+
+    parameter resonanceKnob
+    {
+        name = "Resonance"
+        range = 0.0 .. 1.0
+        default = 0.5
+        function set(value) { resonance = value; }
+    }
+
+    parameter driveKnob
+    {
+        name = "Drive"
+        range = 0.0 .. 1.0
+        default = 0.3
+        function set(value) { drive = value; }
+    }
+
+    parameter pressureKnob
+    {
+        name = "Pressure"
+        range = 0.0 .. 1.0
+        default = 0.5
+        function set(value) { pressure = value; }
+    }
+
+    parameter harmonyKnob
+    {
+        name = "Harmony"
+        range = 0.0 .. 1.0
+        default = 0.7
+        function set(value) { harmony = value; }
+    }
+
+    // Map MIDI CC to pressure / harmony (aftertouch, wheel)
+    event midiInput
+    {
+        function noteOn(   chan, nn, vel) { }  // handled in process
+        function noteOff(  chan, nn, vel) { }  // handled in process
+        function controlChange(chan, ctrl, val)
+        {
+            if (ctrl == 2)      // example: CC2 → pressure
+                pressure = val / 127.0;
+            if (ctrl == 11)     // example: CC11 → harmony
+                harmony  = val / 127.0;
+        }
+    }
+}
+
